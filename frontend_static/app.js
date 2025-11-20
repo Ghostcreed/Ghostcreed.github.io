@@ -68,14 +68,6 @@ async function connectSocketAndLoad(sym) {
   symbol = sym.toUpperCase();
   statusEl.textContent = 'Connecting...';
 
-  // Update chart label for new symbol
-  if(chart){
-    chart.data.datasets[0].label = `${symbol} Price`;
-    chart.data.datasets[0].data = [];
-    chart.data.datasets[1].data = [];
-    chart.update();
-  }
-
   if (socket) {
     try { socket.emit('unsubscribe', symbol); socket.disconnect(); } catch(e){}
     socket = null;
@@ -127,6 +119,10 @@ function addLivePoint(pt) {
 
 function renderChart() {
   if (!chart) createChart();
+
+  // Always update label dynamically
+  chart.data.datasets[0].label = `${symbol} Price`;
+
   chart.data.datasets[0].data = mergedPoints.map(p => ({ x: p.t, y: p.price }));
   chart.data.datasets[1].data = [];
   chart.update();
@@ -134,6 +130,10 @@ function renderChart() {
 
 function updateChart() {
   if (!chart) createChart();
+
+  // Keep label updated when adding live points
+  chart.data.datasets[0].label = `${symbol} Price`;
+
   chart.data.datasets[0].data = mergedPoints.map(p => ({ x: p.t, y: p.price }));
   chart.update('none');
 }
