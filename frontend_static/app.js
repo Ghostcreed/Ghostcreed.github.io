@@ -1,5 +1,4 @@
-// app.js
-let BACKEND = 'https://stock-tracker-backend-7mjp.onrender.com'; // Render backend
+let BACKEND = 'http://localhost:4000';
 let socket = null;
 let chart = null;
 let mergedPoints = [];
@@ -7,12 +6,17 @@ let symbol = 'AAPL';
 
 const symbolInput = document.getElementById('symbolInput');
 const loadBtn = document.getElementById('loadBtn');
+const backendUrlInput = document.getElementById('backendUrl');
 const predictBtn = document.getElementById('predictBtn');
 const statusEl = document.getElementById('status');
 const predictionSummary = document.getElementById('predictionSummary');
 
 loadBtn.addEventListener('click', () => {
-  symbol = (symbolInput.value || 'AAPL').toUpperCase();
+  const newSymbol = (symbolInput.value || 'AAPL').toUpperCase();
+  if (newSymbol === symbol) return; // only reload if symbol changed
+  symbol = newSymbol;
+  const bk = backendUrlInput.value.trim();
+  if (bk) BACKEND = bk;
   connectSocketAndLoad(symbol);
 });
 
@@ -21,6 +25,7 @@ predictBtn.addEventListener('click', () => {
   showPrediction(preds);
 });
 
+backendUrlInput.value = '';
 connectSocketAndLoad(symbol);
 
 function createChart() {
@@ -30,35 +35,22 @@ function createChart() {
     type: 'line',
     data: {
       datasets: [
-        { 
-          label: `${symbol} Price`,
-          data: [], 
-          borderColor: 'blue', 
-          borderWidth: 1.5, 
-          tension: 0.2, 
-          pointRadius: 0 
-        },
-        { 
-          label: 'Prediction', 
-          data: [], 
-          borderColor: 'red', 
-          borderDash: [6,4], 
-          borderWidth: 1, 
-          tension: 0.2, 
-          pointRadius: 0 
-        }
+        { label: `${symbol} Price`, data: [], borderColor: 'blue', borderWidth: 1.5, tension: 0.2, pointRadius: 0 },
+        { label: 'Prediction', data: [], borderColor: 'red', borderDash: [6,4], borderWidth: 1, tension: 0.2, pointRadius: 0 }
       ]
     },
     options: {
       animation: false,
       parsing: false,
-      plugins: { 
-        tooltip: { mode: 'index' },
-        legend: { display: true }
-      },
-      scales: { 
-        x: { type: 'time', time: { unit: 'minute' } }, 
-        y: { beginAtZero: false } 
+      plugins: { tooltip: { mode: 'index' } },
+      scales: {
+        x: { type: 'time', time: { unit: 'minute' } },
+        y: {
+          beginAtZero: false,
+          ticks: {
+            callback: function(value) { return value.toFixed(2); }
+          }
+        }
       }
     }
   });
@@ -67,13 +59,11 @@ function createChart() {
 async function connectSocketAndLoad(sym) {
   symbol = sym.toUpperCase();
   statusEl.textContent = 'Connecting...';
-
   if (socket) {
     try { socket.emit('unsubscribe', symbol); socket.disconnect(); } catch(e){}
     socket = null;
   }
 
-  // Setup WebSocket
   try {
     socket = io(BACKEND, { transports: ['websocket'], autoConnect: true });
     socket.on('connect', () => {
@@ -90,7 +80,6 @@ async function connectSocketAndLoad(sym) {
     statusEl.textContent = 'Socket error';
   }
 
-  // Fetch historical data
   try {
     const res = await fetch(`${BACKEND}/api/history?symbol=${encodeURIComponent(symbol)}&range=1d`);
     const j = await res.json();
@@ -119,23 +108,37 @@ function addLivePoint(pt) {
 
 function renderChart() {
   if (!chart) createChart();
-
-  // Always update label dynamically
   chart.data.datasets[0].label = `${symbol} Price`;
-
   chart.data.datasets[0].data = mergedPoints.map(p => ({ x: p.t, y: p.price }));
   chart.data.datasets[1].data = [];
+
+  // Dynamic Y-axis scaling with 5% padding
+  const prices = mergedPoints.map(p => p.price);
+  if (prices.length) {
+    const minPrice = Math.min(...prices) * 0.95;
+    const maxPrice = Math.max(...prices) * 1.05;
+    chart.options.scales.y.min = minPrice;
+    chart.options.scales.y.max = maxPrice;
+  }
+
   chart.update();
 }
 
 function updateChart() {
   if (!chart) createChart();
-
-  // Keep label updated when adding live points
   chart.data.datasets[0].label = `${symbol} Price`;
-
   chart.data.datasets[0].data = mergedPoints.map(p => ({ x: p.t, y: p.price }));
-  chart.update('none');
+
+  // Dynamic Y-axis scaling for live points
+  const prices = mergedPoints.map(p => p.price);
+  if (prices.length) {
+    const minPrice = Math.min(...prices) * 0.95;
+    const maxPrice = Math.max(...prices) * 1.05;
+    chart.options.scales.y.min = minPrice;
+    chart.options.scales.y.max = maxPrice;
+  }
+
+  chart.update();
 }
 
 function computePrediction(points) {
