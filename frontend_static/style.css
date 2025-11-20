@@ -1,0 +1,8 @@
+body { font-family: system-ui, sans-serif; margin: 16px; background:#f7f7fb; color:#111; }
+.container { max-width: 980px; margin: auto; }
+.controls { display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+.controls input { font-size: 0.95rem; padding:6px; width:120px; text-transform:uppercase; }
+.controls label input { width: 360px; }
+.status { margin-left: 12px; font-weight:600; }
+.chartWrap { background:#fff; padding:12px; border-radius:8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+#predictionSummary { margin-top:10px; color:#333; }

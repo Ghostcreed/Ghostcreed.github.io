@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: stock-tracker-backend
+    env: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
