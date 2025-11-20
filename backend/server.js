@@ -1,3 +1,4 @@
+// server.js
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
@@ -11,9 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: '*' }
-});
+const io = new Server(server, { cors: { origin: '*' } });
 
 const PORT = process.env.PORT || 4000;
 const FINNHUB_KEY = process.env.FINNHUB_KEY || '';
@@ -32,9 +31,7 @@ function startFinnhubWs() {
   }
   fhWs = new WebSocket(FINNHUB_WS_URL);
 
-  fhWs.on('open', () => {
-    console.log('Connected to Finnhub WS');
-  });
+  fhWs.on('open', () => console.log('Connected to Finnhub WS'));
 
   fhWs.on('message', (msg) => {
     try {
@@ -57,19 +54,16 @@ function startFinnhubWs() {
     setTimeout(startFinnhubWs, 3000);
   });
 
-  fhWs.on('error', (err) => {
-    console.error('Finnhub WS error', err.message || err);
-  });
+  fhWs.on('error', (err) => console.error('Finnhub WS error', err.message || err));
 }
 startFinnhubWs();
 
 function sendFinnhubWsSubscribe(action, symbol) {
   if (!fhWs || fhWs.readyState !== WebSocket.OPEN) return;
   try {
-    const msg = JSON.stringify({ type: action, symbol });
-    fhWs.send(msg);
+    fhWs.send(JSON.stringify({ type: action, symbol }));
   } catch (err) {
-    console.error('failed to send fh subscribe', err);
+    console.error('Failed to send fh subscribe', err);
   }
 }
 
@@ -77,6 +71,8 @@ function randomWalk(prev, volatility = 0.01) {
   const changePct = (Math.random() - 0.5) * volatility * 2;
   return +(prev * (1 + changePct)).toFixed(2);
 }
+
+// Synthetic price updates if no FINNHUB_KEY
 setInterval(() => {
   if (FINNHUB_KEY) return;
   for (const sym of Object.keys(lastPrice)) {
@@ -86,6 +82,7 @@ setInterval(() => {
   }
 }, 1000);
 
+// WebSocket connections
 io.on('connection', (socket) => {
   console.log('Client connected', socket.id);
 
@@ -93,21 +90,21 @@ io.on('connection', (socket) => {
     if (!symbolRaw) return;
     const symbol = symbolRaw.toUpperCase();
     socket.join(symbol);
+
     if (!subscribers.has(symbol)) subscribers.set(symbol, new Set());
     subscribers.get(symbol).add(socket.id);
+
     if (!socketToSymbols.has(socket.id)) socketToSymbols.set(socket.id, new Set());
     socketToSymbols.get(socket.id).add(symbol);
 
-    if (FINNHUB_KEY) {
-      if (subscribers.get(symbol).size === 1) {
-        sendFinnhubWsSubscribe('subscribe', symbol);
-      }
-    } else {
-      if (!lastPrice[symbol]) lastPrice[symbol] = +(Math.random() * 200 + 10).toFixed(2);
+    if (FINNHUB_KEY && subscribers.get(symbol).size === 1) {
+      sendFinnhubWsSubscribe('subscribe', symbol);
+    } else if (!lastPrice[symbol]) {
+      lastPrice[symbol] = +(Math.random() * 200 + 10).toFixed(2);
     }
 
     socket.emit('price', { symbol, price: lastPrice[symbol] || null, ts: Date.now() });
-    console.log(`socket ${socket.id} subscribed ${symbol}`);
+    console.log(`Socket ${socket.id} subscribed ${symbol}`);
   });
 
   socket.on('unsubscribe', (symbolRaw) => {
@@ -128,7 +125,7 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('Client disconnected', socket.id);
     const syms = socketToSymbols.get(socket.id) || new Set();
-    syms.forEach(symbol => {
+    syms.forEach((symbol) => {
       if (subscribers.has(symbol)) {
         subscribers.get(symbol).delete(socket.id);
         if (subscribers.get(symbol).size === 0 && FINNHUB_KEY) {
@@ -140,6 +137,7 @@ io.on('connection', (socket) => {
   });
 });
 
+// REST API: historical data
 app.get('/api/history', async (req, res) => {
   const symbol = (req.query.symbol || 'AAPL').toUpperCase();
   const range = req.query.range || '1d';
@@ -159,13 +157,14 @@ app.get('/api/history', async (req, res) => {
         const hist = d.t.map((ts, i) => ({ t: ts * 1000, price: d.c[i] }));
         return res.json({ symbol, range, history: hist });
       } else {
-        console.warn('Finnhub candle returned no ok status; falling back to synthetic');
+        console.warn('Finnhub candle returned no ok status; using synthetic data');
       }
     } catch (err) {
-      console.error('history fetch err', err.message || err);
+      console.error('History fetch error', err.message || err);
     }
   }
 
+  // Fallback: synthetic history
   function makeSyntheticHistory(seedPrice, points = 120) {
     const arr = [];
     let price = seedPrice;
@@ -173,10 +172,7 @@ app.get('/api/history', async (req, res) => {
     const stepMs = 60_000;
     for (let i = points - 1; i >= 0; --i) {
       price = randomWalk(price, 0.015);
-      arr.push({
-        t: now - i * stepMs,
-        price
-      });
+      arr.push({ t: now - i * stepMs, price });
     }
     return arr;
   }
@@ -184,6 +180,16 @@ app.get('/api/history', async (req, res) => {
   const seed = lastPrice[symbol] || (Math.random() * 300).toFixed(2);
   const history = makeSyntheticHistory(Number(seed), 300);
   return res.json({ symbol, range, history });
+});
+
+// Friendly root route
+app.get('/', (req, res) => {
+  res.send('Stock Tracker backend running. Use /api/history for historical data or connect via WebSocket for live prices.');
+});
+
+// Catch-all 404
+app.get('*', (req, res) => {
+  res.status(404).send('Route not found. Use /api/history or connect via WebSocket.');
 });
 
 server.listen(PORT, () => {
