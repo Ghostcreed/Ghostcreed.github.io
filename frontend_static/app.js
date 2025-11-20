@@ -1,4 +1,4 @@
-let BACKEND = 'http://stock-tracker-backend-7mjp.onrender.com';
+let BACKEND = 'https://stock-tracker-backend-7mjp.onrender.com/';
 let socket = null;
 let chart = null;
 let mergedPoints = [];
