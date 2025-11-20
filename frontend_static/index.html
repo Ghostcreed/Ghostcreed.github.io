@@ -14,11 +14,9 @@
   <div class="container">
     <h1>Real-Time Stock Tracker</h1>
     <div class="controls">
+      <label for="symbolInput">Symbol:</label>
       <input id="symbolInput" value="AAPL" />
       <button id="loadBtn">Load</button>
-      <label>Backend URL:
-        <input id="backendUrl" placeholder="https://your-backend.example" />
-      </label>
       <button id="predictBtn">Predict</button>
       <div id="status" class="status">Disconnected</div>
     </div>
@@ -26,10 +24,6 @@
     <div class="chartWrap">
       <canvas id="chart" height="320"></canvas>
       <div id="predictionSummary"></div>
-    </div>
-
-    <div class="notes">
-      <p>Upload these files to your school server and set Backend URL to your deployed backend. If you don't set a backend, the page will try to talk to <code>http://localhost:4000</code>.</p>
     </div>
   </div>
 
