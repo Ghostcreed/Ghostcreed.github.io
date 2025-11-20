@@ -1,4 +1,5 @@
-let BACKEND = 'http://localhost:4000';
+// app.js
+let BACKEND = 'https://stock-tracker-backend-7mjp.onrender.com'; // <- updated
 let socket = null;
 let chart = null;
 let mergedPoints = [];
@@ -6,15 +7,12 @@ let symbol = 'AAPL';
 
 const symbolInput = document.getElementById('symbolInput');
 const loadBtn = document.getElementById('loadBtn');
-const backendUrlInput = document.getElementById('backendUrl');
 const predictBtn = document.getElementById('predictBtn');
 const statusEl = document.getElementById('status');
 const predictionSummary = document.getElementById('predictionSummary');
 
 loadBtn.addEventListener('click', () => {
   symbol = (symbolInput.value || 'AAPL').toUpperCase();
-  const bk = backendUrlInput.value.trim();
-  if (bk) BACKEND = bk;
   connectSocketAndLoad(symbol);
 });
 
@@ -23,7 +21,6 @@ predictBtn.addEventListener('click', () => {
   showPrediction(preds);
 });
 
-backendUrlInput.value = '';
 connectSocketAndLoad(symbol);
 
 function createChart() {
@@ -33,8 +30,8 @@ function createChart() {
     type: 'line',
     data: {
       datasets: [
-        { label: `${symbol} Price`, data: [], borderWidth: 1.5, tension: 0.2, pointRadius: 0 },
-        { label: 'Prediction', data: [], borderDash: [6,4], borderWidth: 1, tension: 0.2, pointRadius: 0 }
+        { label: `${symbol} Price`, data: [], borderColor: 'blue', borderWidth: 1.5, tension: 0.2, pointRadius: 0 },
+        { label: 'Prediction', data: [], borderColor: 'red', borderDash: [6,4], borderWidth: 1, tension: 0.2, pointRadius: 0 }
       ]
     },
     options: {
