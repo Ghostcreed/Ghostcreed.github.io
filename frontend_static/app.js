@@ -1,5 +1,5 @@
 // app.js
-let BACKEND = 'https://stock-tracker-backend-7mjp.onrender.com'; // <- updated
+let BACKEND = 'https://stock-tracker-backend-7mjp.onrender.com'; // Render backend
 let socket = null;
 let chart = null;
 let mergedPoints = [];
@@ -30,15 +30,36 @@ function createChart() {
     type: 'line',
     data: {
       datasets: [
-        { label: `${symbol} Price`, data: [], borderColor: 'blue', borderWidth: 1.5, tension: 0.2, pointRadius: 0 },
-        { label: 'Prediction', data: [], borderColor: 'red', borderDash: [6,4], borderWidth: 1, tension: 0.2, pointRadius: 0 }
+        { 
+          label: `${symbol} Price`,
+          data: [], 
+          borderColor: 'blue', 
+          borderWidth: 1.5, 
+          tension: 0.2, 
+          pointRadius: 0 
+        },
+        { 
+          label: 'Prediction', 
+          data: [], 
+          borderColor: 'red', 
+          borderDash: [6,4], 
+          borderWidth: 1, 
+          tension: 0.2, 
+          pointRadius: 0 
+        }
       ]
     },
     options: {
       animation: false,
       parsing: false,
-      plugins: { tooltip: { mode: 'index' } },
-      scales: { x: { type: 'time', time: { unit: 'minute' } }, y: { beginAtZero: false } }
+      plugins: { 
+        tooltip: { mode: 'index' },
+        legend: { display: true }
+      },
+      scales: { 
+        x: { type: 'time', time: { unit: 'minute' } }, 
+        y: { beginAtZero: false } 
+      }
     }
   });
 }
@@ -46,11 +67,21 @@ function createChart() {
 async function connectSocketAndLoad(sym) {
   symbol = sym.toUpperCase();
   statusEl.textContent = 'Connecting...';
+
+  // Update chart label for new symbol
+  if(chart){
+    chart.data.datasets[0].label = `${symbol} Price`;
+    chart.data.datasets[0].data = [];
+    chart.data.datasets[1].data = [];
+    chart.update();
+  }
+
   if (socket) {
     try { socket.emit('unsubscribe', symbol); socket.disconnect(); } catch(e){}
     socket = null;
   }
 
+  // Setup WebSocket
   try {
     socket = io(BACKEND, { transports: ['websocket'], autoConnect: true });
     socket.on('connect', () => {
@@ -67,6 +98,7 @@ async function connectSocketAndLoad(sym) {
     statusEl.textContent = 'Socket error';
   }
 
+  // Fetch historical data
   try {
     const res = await fetch(`${BACKEND}/api/history?symbol=${encodeURIComponent(symbol)}&range=1d`);
     const j = await res.json();
