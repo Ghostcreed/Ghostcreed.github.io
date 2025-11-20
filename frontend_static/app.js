@@ -1,4 +1,4 @@
-let BACKEND = 'http://localhost:4000';
+let BACKEND = 'http://stock-tracker-backend-7mjp.onrender.com';
 let socket = null;
 let chart = null;
 let mergedPoints = [];
@@ -11,12 +11,16 @@ const predictBtn = document.getElementById('predictBtn');
 const statusEl = document.getElementById('status');
 const predictionSummary = document.getElementById('predictionSummary');
 
+// Pre-fill backend URL
+backendUrlInput.value = BACKEND;
+
 loadBtn.addEventListener('click', () => {
   const newSymbol = (symbolInput.value || 'AAPL').toUpperCase();
   if (newSymbol === symbol) return; // only reload if symbol changed
   symbol = newSymbol;
-  const bk = backendUrlInput.value.trim();
-  if (bk) BACKEND = bk;
+  let bk = backendUrlInput.value.trim();
+  if (!bk) bk = BACKEND; // fallback to default
+  BACKEND = bk;
   connectSocketAndLoad(symbol);
 });
 
@@ -25,7 +29,6 @@ predictBtn.addEventListener('click', () => {
   showPrediction(preds);
 });
 
-backendUrlInput.value = '';
 connectSocketAndLoad(symbol);
 
 function createChart() {
@@ -59,6 +62,7 @@ function createChart() {
 async function connectSocketAndLoad(sym) {
   symbol = sym.toUpperCase();
   statusEl.textContent = 'Connecting...';
+  
   if (socket) {
     try { socket.emit('unsubscribe', symbol); socket.disconnect(); } catch(e){}
     socket = null;
@@ -112,15 +116,7 @@ function renderChart() {
   chart.data.datasets[0].data = mergedPoints.map(p => ({ x: p.t, y: p.price }));
   chart.data.datasets[1].data = [];
 
-  // Dynamic Y-axis scaling with 5% padding
-  const prices = mergedPoints.map(p => p.price);
-  if (prices.length) {
-    const minPrice = Math.min(...prices) * 0.95;
-    const maxPrice = Math.max(...prices) * 1.05;
-    chart.options.scales.y.min = minPrice;
-    chart.options.scales.y.max = maxPrice;
-  }
-
+  updateYAxis();
   chart.update();
 }
 
@@ -129,16 +125,18 @@ function updateChart() {
   chart.data.datasets[0].label = `${symbol} Price`;
   chart.data.datasets[0].data = mergedPoints.map(p => ({ x: p.t, y: p.price }));
 
-  // Dynamic Y-axis scaling for live points
-  const prices = mergedPoints.map(p => p.price);
-  if (prices.length) {
-    const minPrice = Math.min(...prices) * 0.95;
-    const maxPrice = Math.max(...prices) * 1.05;
-    chart.options.scales.y.min = minPrice;
-    chart.options.scales.y.max = maxPrice;
-  }
-
+  updateYAxis();
   chart.update();
+}
+
+// Dynamically update Y-axis with 5% padding
+function updateYAxis() {
+  const prices = mergedPoints.map(p => p.price);
+  if (!prices.length) return;
+  const minPrice = Math.min(...prices) * 0.95;
+  const maxPrice = Math.max(...prices) * 1.05;
+  chart.options.scales.y.min = minPrice;
+  chart.options.scales.y.max = maxPrice;
 }
 
 function computePrediction(points) {
