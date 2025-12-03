@@ -1,32 +1,57 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <title>Stock Tracker — Live</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/regression@2.0.1/dist/regression.min.js"></script>
+    <meta charset="utf-8" />
+    <title>Stock Tracker — Live</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/regression@2.0.1/dist/regression.min.js"></script>
+    <link rel="stylesheet" href="style.css" />
+
 </head>
 <body>
-  <div class="container">
+<div class="container">
     <h1>Real-Time Stock Tracker</h1>
-    <div class="controls">
-      <label for="symbolInput">Symbol:</label>
-      <input id="symbolInput" value="AAPL" />
-      <button id="loadBtn">Load</button>
-      <button id="predictBtn">Predict</button>
-      <div id="status" class="status">Disconnected</div>
-    </div>
 
-    <div class="chartWrap">
-      <canvas id="chart" height="320"></canvas>
-      <div id="predictionSummary"></div>
-    </div>
-  </div>
+    <div class="card">
+        <div class="controls">
+            <div class="input-group">
+                <label for="symbolInput">Symbol:</label>
+                <input id="symbolInput" value="AAPL" />
+            </div>
+            <button id="loadBtn">Load Data</button>
+            <button id="predictBtn">Predict Price</button>
+            <div id="statusContainer" class="status-container">
+                <div class="status-dot"></div>
+                <span class="status-text" id="status">Disconnected</span>
+            </div>
+        </div>
 
-  <script src="app.js"></script>
+        <div class="price-info" id="priceInfo" style="display: none;">
+            <div class="price-item">
+                <div class="price-label">Current Price</div>
+                <div class="price-value" id="currentPrice">--</div>
+            </div>
+            <div class="price-item">
+                <div class="price-label">Change</div>
+                <div class="price-change" id="priceChange">--</div>
+            </div>
+            <div class="price-item">
+                <div class="price-label">Last Updated</div>
+                <div class="price-value" id="lastUpdate" style="font-size: 1rem;">--</div>
+            </div>
+        </div>
+
+        <div class="chartWrap">
+            <canvas id="chart"></canvas>
+        </div>
+
+        <div id="predictionSummary"></div>
+    </div>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
