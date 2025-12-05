@@ -286,7 +286,7 @@ function computePrediction(points) {
 
 function showPrediction(preds) {
     if (!preds || preds.length === 0) {
-        predictionSummary.innerHTML = '⚠️ Not enough data for prediction';
+        predictionSummary.innerHTML = 'Not enough data for prediction';
         return;
     }
     if (!chart) createChart();
@@ -301,7 +301,7 @@ function showPrediction(preds) {
     const changeColor = change >= 0 ? '#48bb78' : '#f56565';
 
     predictionSummary.innerHTML = `
-    🔮 <strong>Prediction:</strong> 
+    <strong>Prediction:</strong> 
     Next price point: <strong>$${preds[0].price.toFixed(2)}</strong> → 
     Future estimate: <strong>$${predictedPrice.toFixed(2)}</strong>
     <span style="color: ${changeColor}; font-weight: 600;"> ${arrow} ${Math.abs(changePercent)}%</span>
