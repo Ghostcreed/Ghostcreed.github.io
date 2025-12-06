@@ -1,3 +1,3 @@
-http://csci331vm.cs.montana.edu/~r12z784@student.montana.edu/stock-tracker/frontend_static/
+
 
 https://csci331vm.cs.montana.edu/~g48r885@student.montana.edu/project/Ghostcreed.github.io/frontend_static/index.html
